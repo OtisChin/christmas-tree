@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "three": "0.160.0",
-    "@mediapipe/tasks-vision": "0.10.3"
+    "@mediapipe/tasks-vision": "0.10.3",
+    "gsap": "3.12.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
