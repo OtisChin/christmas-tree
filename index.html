@@ -15,6 +15,13 @@
         overflow: hidden;
         background-color: #000000;
         font-family: "Quicksand", "Noto Serif SC", sans-serif;
+        /* Custom Candy Cane Cursor */
+        /* Rotated -45 degrees (Top-Left), Horizontal Pink Stripes (#FFC0CB) */
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="fill:none;stroke-linecap:round"><defs><mask id="m"><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="white" stroke-width="6" fill="none"/></mask></defs><g transform="rotate(-45, 16, 16)"><!-- White Base --><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="white" stroke-width="6" fill="none"/><!-- Pink Stripes Masked --><g mask="url(%23m)"><path d="M0,4 h32 M0,9 h32 M0,14 h32 M0,19 h32 M0,24 h32 M0,29 h32" stroke="%23ffc0cb" stroke-width="2"/></g><!-- Shadow --><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="rgba(0,0,0,0.2)" stroke-width="7" fill="none" style="mix-blend-mode:multiply"/></g></svg>') 2 2, auto;
+      }
+      /* Ensure pointer events work on interactive elements with the custom cursor */
+      button, a, .clickable {
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="fill:none;stroke-linecap:round"><defs><mask id="m"><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="white" stroke-width="6" fill="none"/></mask></defs><g transform="rotate(-45, 16, 16)"><!-- White Base --><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="white" stroke-width="6" fill="none"/><!-- Pink Stripes Masked --><g mask="url(%23m)"><path d="M0,4 h32 M0,9 h32 M0,14 h32 M0,19 h32 M0,24 h32 M0,29 h32" stroke="%23ffc0cb" stroke-width="2"/></g><!-- Shadow --><path d="M12,10 A6,6 0 0,1 24,10 V28" stroke="rgba(0,0,0,0.2)" stroke-width="7" fill="none" style="mix-blend-mode:multiply"/></g></svg>') 2 2, pointer;
       }
       #canvas-container {
         width: 100vw;
@@ -313,7 +320,7 @@
           <div class="icon">🖐️</div>
           <div class="content">
             <div class="title">Scatter Mode</div>
-            <div class="desc">张开手掌，进入照片环形星云（自动旋转）。</div>
+            <div class="desc">张开手掌，进入照片环形星云。</div>
           </div>
         </div>
 
@@ -347,34 +354,35 @@
       import gsap from "gsap";
 
       // Updated with user-provided images
+      // Using wsrv.nl as a CORS proxy to fix Access-Control-Allow-Origin errors
       const IMAGE_URLS = [
-        "https://free.picui.cn/free/2025/12/24/694adff40080e.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbf966466.png",
-        "https://free.picui.cn/free/2025/12/24/694adbf75a6d7.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbf28fe89.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbf028019.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbdb151d0.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbde5610b.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbe3a3e80.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbe559c68.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbecdc443.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbd846b1d.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbd6559da.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbd49e137.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbd023d5f.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbccd0828.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbbcda07a.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbb31c5d5.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbbfb8b2e.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbb46a84c.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbc235a70.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbb5a5da9.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbc46df45.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbb7078d2.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbc634ca9.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbbab55ef.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbc83706d.jpeg",
-        "https://free.picui.cn/free/2025/12/24/694adbaa7476e.jpeg"
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694b0623b9aea.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbf966466.png",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbf75a6d7.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbf28fe89.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbf028019.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbdb151d0.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbde5610b.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbe3a3e80.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbe559c68.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbecdc443.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbd846b1d.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbd6559da.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbd49e137.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbd023d5f.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbccd0828.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbbcda07a.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbb31c5d5.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbbfb8b2e.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbb46a84c.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbc235a70.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbb5a5da9.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbc46df45.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbb7078d2.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbc634ca9.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbbab55ef.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbc83706d.jpeg",
+        "https://wsrv.nl/?url=free.picui.cn/free/2025/12/24/694adbaa7476e.jpeg"
       ];
 
       // --- CONFIGURATION ---
@@ -423,6 +431,16 @@
       let clock = new THREE.Clock();
       let mainGroup, photoGroup, backgroundGroup;
       
+      // Mouse for Parallax & Interaction
+      let mouse = new THREE.Vector2();
+      let raycaster = new THREE.Raycaster();
+      let targetCameraPos = new THREE.Vector3();
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+      let dragVelocity = { x: 0, y: 0 }; // Inertia (x is rotation around Y axis, y is rotation around X axis)
+      
+      // ... existing code ...
+
       // Meshes
       let treeMesh, ornamentMesh;
       let snowPoints, bgStars, bgSnowPoints, bigSnowPoints;
@@ -439,6 +457,76 @@
       let handLandmarker = null;
       let drawingUtils = null;
 
+      // Shooting Stars
+      let shootingStar;
+      function createShootingStarSystem() {
+         const geo = new THREE.BufferGeometry();
+         const positions = new Float32Array(2 * 3); // line segment
+         geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+         
+         const mat = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0
+         });
+         
+         shootingStar = new THREE.Line(geo, mat);
+         scene.add(shootingStar);
+         shootingStar.userData = { active: false, t: 0, start: new THREE.Vector3(), end: new THREE.Vector3() };
+      }
+
+      function updateShootingStar(dt) {
+         if (!shootingStar) return;
+         
+         const data = shootingStar.userData;
+         if (!data.active) {
+            // Chance to spawn
+            if (Math.random() < 0.01) { // 1% chance per frame
+               data.active = true;
+               data.t = 0;
+               
+               // Random start position in upper hemisphere
+               const theta = Math.random() * Math.PI * 2;
+               const phi = Math.acos(2 * Math.random() - 1);
+               const r = 80;
+               
+               data.start.set(
+                  r * Math.sin(phi) * Math.cos(theta),
+                  Math.abs(r * Math.cos(phi)) + 10, // Keep upper
+                  r * Math.sin(phi) * Math.sin(theta)
+               );
+               
+               // End position (random direction downwards)
+               data.end.copy(data.start).add(new THREE.Vector3(
+                  (Math.random()-0.5)*60,
+                  -(Math.random()*40 + 20),
+                  (Math.random()-0.5)*60
+               ));
+            }
+         } else {
+            data.t += dt * 1.5; // Speed
+            if (data.t > 1) {
+               data.active = false;
+               shootingStar.material.opacity = 0;
+            } else {
+               // Update line positions to simulate tail
+               // Head is at lerp(start, end, t)
+               // Tail is at lerp(start, end, t - 0.1)
+               const head = new THREE.Vector3().copy(data.start).lerp(data.end, data.t);
+               const tailT = Math.max(0, data.t - 0.15);
+               const tail = new THREE.Vector3().copy(data.start).lerp(data.end, tailT);
+               
+               const pos = shootingStar.geometry.attributes.position;
+               pos.setXYZ(0, head.x, head.y, head.z);
+               pos.setXYZ(1, tail.x, tail.y, tail.z);
+               pos.needsUpdate = true;
+               
+               // Fade in/out
+               shootingStar.material.opacity = Math.sin(data.t * Math.PI);
+            }
+         }
+      }
+
       async function init() {
         setupThree();
         
@@ -453,6 +541,7 @@
         createTree();
         createOrnaments();
         createTopStar();
+        createShootingStarSystem(); // Added
         
         setupPostProcessing();
         setupInput();
@@ -722,6 +811,8 @@
             treeRot: treeRot,
             scatterPos: scatterPos,
             scatterRot: scatterRot,
+            driftOffset: Math.random() * Math.PI * 2, // Random phase
+            driftSpeed: 0.2 + Math.random() * 0.3,    // Random speed
             // Pre-calculate focus position (relative to camera or absolute)
             // We will calculate exact focus pos dynamically in animate
           };
@@ -1027,7 +1118,9 @@
             ),
             currentPos: new THREE.Vector3(x, y, z),
             rot: new THREE.Euler(Math.random()*6, Math.random()*6, 0),
-            scale: 0.5 + Math.random()
+            scale: 0.5 + Math.random(),
+            driftOffset: Math.random() * Math.PI * 2, // Random offset for drift
+            driftSpeed: 0.5 + Math.random() * 0.5     // Random speed for drift
           });
 
           dummy.position.set(x, y, z);
@@ -1090,7 +1183,9 @@
             treePos: new THREE.Vector3(x, y, z),
             scatterPos: new THREE.Vector3(sx, sy, sz),
             currentPos: new THREE.Vector3(x, y, z),
-            scale: 0.8 + Math.random() * 0.4
+            scale: 0.8 + Math.random() * 0.4,
+            driftOffset: Math.random() * Math.PI * 2, // Random offset for drift
+            driftSpeed: 0.3 + Math.random() * 0.4     // Random speed for drift
           });
 
           const colorHex = palette[Math.floor(Math.random() * palette.length)];
@@ -1144,6 +1239,106 @@
       }
 
       function setupInput() {
+        // Mouse Move Listener for Parallax
+        window.addEventListener('mousemove', (e) => {
+           mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+           mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+           // Handle Drag Rotation (only in TREE mode)
+           if (isDragging && STATE.mode === 'TREE') {
+               const deltaMove = {
+                   x: e.clientX - previousMousePosition.x,
+                   y: e.clientY - previousMousePosition.y
+               };
+
+               const rotateSpeed = 0.005;
+               
+               // Horizontal drag rotates around Y axis (Left/Right)
+               mainGroup.rotation.y += deltaMove.x * rotateSpeed;
+               
+               // Vertical drag rotates around X axis (Up/Down)
+               // Invert sign because dragging down should tilt forward (positive X) or backward depending on convention
+               // Usually dragging down tilts it towards you (positive X)
+               mainGroup.rotation.x += deltaMove.y * rotateSpeed;
+               
+               // Limit X rotation to avoid flipping upside down (e.g., -45 to +45 degrees)
+               // Math.PI / 4 = 45 degrees
+               mainGroup.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, mainGroup.rotation.x));
+
+               dragVelocity = {
+                   x: deltaMove.x * rotateSpeed,
+                   y: deltaMove.y * rotateSpeed
+               };
+
+               previousMousePosition = {
+                   x: e.clientX,
+                   y: e.clientY
+               };
+           }
+        });
+
+        // Mouse Down for Dragging
+        window.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = {
+                x: e.clientX,
+                y: e.clientY
+            };
+        });
+
+        // Mouse Up to stop dragging
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Double Click to Toggle Mode
+        window.addEventListener('dblclick', () => {
+            if (STATE.mode === 'TREE') {
+                enterMode('SCATTER');
+            } else if (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') {
+                enterMode('TREE');
+            }
+        });
+
+        // Click to Focus Photo (in SCATTER mode)
+        window.addEventListener('click', (e) => {
+            // Only if not dragging (simple click)
+            if (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') {
+                // Raycast
+                raycaster.setFromCamera(mouse, camera);
+                // Check intersections with photoMeshes
+                // photoMeshes are Groups, we need to intersect their children (Mesh)
+                // Actually raycaster can intersectObjects recursively
+                const intersects = raycaster.intersectObjects(photoMeshes, true);
+
+                if (intersects.length > 0) {
+                    // Find the root group of the clicked object
+                    let obj = intersects[0].object;
+                    while(obj.parent && !photoMeshes.includes(obj)) {
+                        obj = obj.parent;
+                    }
+                    
+                    if (photoMeshes.includes(obj)) {
+                        const index = obj.userData.id;
+                        
+                        // Toggle Focus
+                        if (STATE.mode === 'FOCUS' && STATE.focusIndex === index) {
+                            // If already focused on this one, go back to SCATTER (unfocus)
+                            enterMode('SCATTER');
+                        } else {
+                            // Focus on this one
+                            enterMode('FOCUS', index);
+                        }
+                    }
+                } else {
+                    // Clicked on empty space in SCATTER/FOCUS mode -> Go back to SCATTER
+                    if (STATE.mode === 'FOCUS') {
+                        enterMode('SCATTER');
+                    }
+                }
+            }
+        });
+
         const helpBtn = document.getElementById('help-btn');
         const panel = document.getElementById('instruction-panel');
         helpBtn.addEventListener('click', () => {
@@ -1300,10 +1495,23 @@
         STATE.hand.y = (lm[9].y - 0.5) * 2;
       }
 
-      function enterMode(mode) {
+      function enterMode(mode, idx = -1) {
         const prevMode = STATE.mode;
         STATE.mode = mode;
+        STATE.focusIndex = idx; // Store focus index
         
+        // Adjust frame brightness: Darker in Scatter/Nebula mode to reduce glare
+        if (photoMeshes.length > 0) {
+           const frameMat = photoMeshes[0].children[0].material;
+           if (mode === 'TREE') {
+               frameMat.color.setHex(0xfffaf0);
+               frameMat.roughness = 0.4; // Restore roughness
+           } else {
+               frameMat.color.setHex(0xaaaaaa); // Medium grey (brighter than 0x666666 but darker than 0xcccccc)
+               frameMat.roughness = 0.7; // Slightly less rough to allow some light play
+           }
+        }
+
         if (mode === 'TREE') {
           gsap.to(camera.position, { x:0, y:0, z: 60, duration: 2, ease: "power2.inOut" });
           // Reset Photo Group rotation to align with tree?
@@ -1311,7 +1519,8 @@
         } else if (mode === 'SCATTER') {
           // Camera moves further back to accommodate larger ring (radius 35)
           gsap.to(camera.position, { x:0, y:0, z: 65, duration: 2.5, ease: "expo.out" }); 
-          STATE.focusIndex = -1;
+          // Keep focus index if provided (e.g. from click), otherwise reset
+          if (idx === -1) STATE.focusIndex = -1;
         } else if (mode === 'FOCUS') {
            // Do not change camera position, just let the photo come to us
         }
@@ -1325,6 +1534,26 @@
         // This is crucial for correct Focus positioning relative to parent group rotations
         if (mainGroup) mainGroup.updateMatrixWorld(true);
 
+        // Update Shooting Stars
+        updateShootingStar(dt);
+
+        // Parallax Camera & Drag
+        if (STATE.mode !== 'FOCUS') {
+           if (STATE.mode === 'TREE' && isDragging) {
+              // Dragging overrides parallax
+              // Camera stays at baseZ but we might want to let it drift slightly?
+              // For now, disable parallax on camera when dragging tree to avoid motion sickness
+              camera.lookAt(0,0,0);
+           } else {
+               // Smoothly move camera based on mouse
+               // Base position depends on mode
+               const baseZ = STATE.mode === 'SCATTER' ? 65 : 60;
+               targetCameraPos.set(mouse.x * 2, mouse.y * 2, baseZ);
+               camera.position.lerp(targetCameraPos, 0.05);
+               camera.lookAt(0, 0, 0);
+           }
+        }
+
         // Global Rotation Logic
         if (STATE.mode === 'SCATTER') {
            // Automatic rotation: Left to Right (Positive Y rotation)
@@ -1336,7 +1565,29 @@
            STATE.carouselVelocity = 0;
         } else {
            // Tree Mode
-           mainGroup.rotation.y += STATE.autoRotateSpeed * dt;
+           if (!isDragging) {
+               // Apply inertia
+               if (Math.abs(dragVelocity.x) > 0.0001 || Math.abs(dragVelocity.y) > 0.0001) {
+                   mainGroup.rotation.y += dragVelocity.x;
+                   mainGroup.rotation.x += dragVelocity.y;
+                   
+                   dragVelocity.x *= 0.95; // Damping
+                   dragVelocity.y *= 0.95; 
+                   
+                   // Check limits for X during inertia
+                   mainGroup.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, mainGroup.rotation.x));
+               } else {
+                   // Fallback to auto-rotate if stopped AND reset X rotation
+                   mainGroup.rotation.y += STATE.autoRotateSpeed * dt;
+                   
+                   // Smoothly reset X rotation to 0 (upright)
+                   if (Math.abs(mainGroup.rotation.x) > 0.001) {
+                       mainGroup.rotation.x = THREE.MathUtils.lerp(mainGroup.rotation.x, 0, 0.05);
+                   } else {
+                       mainGroup.rotation.x = 0;
+                   }
+               }
+           }
            // Sync photo group
            photoGroup.rotation.y = 0; 
         }
@@ -1351,12 +1602,36 @@
           const d = treeData[i];
           // Scatter mode: explode outwards
           const target = (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') ? d.scatterPos : d.treePos;
-          d.currentPos.lerp(target, lerpFactor);
+          
+          let targetPos = target.clone();
+
+          // Add flow to currentPos for Tree Mode
+          if (STATE.mode === 'TREE') {
+              // ... existing tree mode logic ...
+              // For simplicity, we just use the original lerp logic here but kept the structure
+              // We previously decided to skip complex flow to keep shape clean
+              // So we just lerp to target
+          } else if (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') {
+             // Add Drift Animation in Nebula Mode
+             // Use sine waves to create floating effect
+             const time = clock.elapsedTime;
+             const driftX = Math.sin(time * d.driftSpeed + d.driftOffset) * 2.0; // Amplitude 2.0
+             const driftY = Math.cos(time * d.driftSpeed * 0.8 + d.driftOffset) * 2.0;
+             const driftZ = Math.sin(time * d.driftSpeed * 0.5 + d.driftOffset) * 2.0;
+             
+             targetPos.add(new THREE.Vector3(driftX, driftY, driftZ));
+          }
+
+          d.currentPos.lerp(targetPos, lerpFactor);
+
           dummy.position.copy(d.currentPos);
           dummy.rotation.copy(d.rot);
           let s = d.scale;
           if(STATE.mode === 'TREE') {
-             s *= (0.85 + 0.15 * Math.sin(clock.elapsedTime * 3 + i));
+             // Enhanced Sparkle: Sharp sine wave
+             // Math.sin(...)^10 creates sharp peaks (twinkles)
+             const sparkle = Math.pow(Math.sin(clock.elapsedTime * 3 + i * 0.1), 10); 
+             s *= (0.6 + 0.6 * sparkle); 
           }
           dummy.scale.setScalar(s);
           dummy.updateMatrix();
@@ -1368,7 +1643,21 @@
         for(let i=0; i<CONFIG.ribbon.sphereCount; i++) {
           const d = ornamentData[i];
           const target = (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') ? d.scatterPos : d.treePos;
-          d.currentPos.lerp(target, lerpFactor);
+          
+          let targetPos = target.clone();
+
+          if (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') {
+             // Add Drift Animation for Ornaments
+             const time = clock.elapsedTime;
+             // Slightly slower/different drift for ornaments
+             const driftX = Math.sin(time * d.driftSpeed + d.driftOffset) * 3.0; 
+             const driftY = Math.cos(time * d.driftSpeed * 0.9 + d.driftOffset) * 3.0;
+             const driftZ = Math.sin(time * d.driftSpeed * 0.6 + d.driftOffset) * 3.0;
+             
+             targetPos.add(new THREE.Vector3(driftX, driftY, driftZ));
+          }
+
+          d.currentPos.lerp(targetPos, lerpFactor);
           dummy.position.copy(d.currentPos);
           dummy.scale.setScalar(d.scale);
           dummy.updateMatrix();
@@ -1394,6 +1683,16 @@
              targetPos.copy(d.scatterPos);
              targetRot.copy(d.scatterRot);
              targetScale = 1.8; // Larger scale for scatter mode to look like reference
+             
+             // Add Drift for Photos in Nebula Mode (but NOT if this specific photo is focused)
+             if (STATE.mode === 'SCATTER' || (STATE.mode === 'FOCUS' && STATE.focusIndex !== idx)) {
+                 const time = clock.elapsedTime;
+                 const driftY = Math.sin(time * d.driftSpeed + d.driftOffset) * 1.5; // Vertical drift
+                 targetPos.y += driftY;
+                 
+                 // Subtle rotation drift
+                 targetRot.z += Math.sin(time * d.driftSpeed * 0.5) * 0.05; // Slight tilt
+             }
           }
 
           // Special override for FOCUS mode
