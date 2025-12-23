@@ -346,35 +346,35 @@
       import { FilesetResolver, HandLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
       import gsap from "gsap";
 
-      // Replaced broken links with reliable Christmas/Winter themed Unsplash images
+      // Updated with user-provided images
       const IMAGE_URLS = [
-        "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1512413914633-b5043f4041ea?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1544216839-847e0347e870?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1482517967863-00e15c9b4499?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1543589077-47d81606c1bf?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1576919228236-a097c32a58dd?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1513297887119-d46091b24bfa?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1605658632669-e0d1645479df?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1511105612988-202a634e5318?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1544675545-c419358e6589?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1576016609930-b472e9a59c7d?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1575217985474-c8c3622081f9?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1544078751-58fee2d8a03b?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1478144592103-25e218a04891?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1483232539664-d89d58f02033?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1457269449834-928af6406ed3?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1481146205797-4d693f92d19f?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1481391032119-d07dd4124b69?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1543096222-72de739f7917?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1481391319762-47d9381f921e?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1484600899469-230e8d1d59c0?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1482638202377-5fec83196c05?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1514064019862-23e2a332a6a6?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1479722842840-c0a82164beed?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1512474932049-78ea696f9c42?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1512351735230-8d550b7dc994?q=80&w=400&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=400&auto=format&fit=crop"
+        "https://free.picui.cn/free/2025/12/24/694adff40080e.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbf966466.png",
+        "https://free.picui.cn/free/2025/12/24/694adbf75a6d7.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbf28fe89.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbf028019.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbdb151d0.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbde5610b.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbe3a3e80.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbe559c68.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbecdc443.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbd846b1d.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbd6559da.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbd49e137.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbd023d5f.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbccd0828.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbbcda07a.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbb31c5d5.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbbfb8b2e.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbb46a84c.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbc235a70.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbb5a5da9.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbc46df45.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbb7078d2.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbc634ca9.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbbab55ef.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbc83706d.jpeg",
+        "https://free.picui.cn/free/2025/12/24/694adbaa7476e.jpeg"
       ];
 
       // --- CONFIGURATION ---
