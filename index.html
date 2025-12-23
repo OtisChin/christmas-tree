@@ -67,6 +67,12 @@
         letter-spacing: 4px;
         text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
       }
+      .loader-sub {
+        color: #888;
+        font-family: "Quicksand", sans-serif;
+        font-size: 14px;
+        margin-top: 10px;
+      }
       .spinner {
         width: 40px;
         height: 40px;
@@ -283,6 +289,7 @@
     <div id="loader">
       <div class="spinner"></div>
       <div class="loader-text">Loading Magic...</div>
+      <div class="loader-sub" id="loader-sub">Preparing memories</div>
     </div>
 
     <div id="canvas-container"></div>
@@ -306,7 +313,7 @@
           <div class="icon">🖐️</div>
           <div class="content">
             <div class="title">Scatter Mode</div>
-            <div class="desc">张开手掌，粒子炸裂。移动手掌旋转视角，靠近镜头缩放。</div>
+            <div class="desc">张开手掌，进入照片环形星云。左右挥手可旋转照片环。</div>
           </div>
         </div>
 
@@ -322,7 +329,7 @@
           <div class="icon">👋</div>
           <div class="content">
             <div class="title">Navigate</div>
-            <div class="desc">在聚焦模式下，左右挥手即可切换照片。</div>
+            <div class="desc">在星云模式下，左右挥手旋转照片墙。</div>
           </div>
         </div>
       </div>
@@ -347,6 +354,37 @@
       import { FilesetResolver, HandLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
       import gsap from "gsap";
 
+      // Replaced broken links with reliable Christmas/Winter themed Unsplash images
+      const IMAGE_URLS = [
+        "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1512413914633-b5043f4041ea?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1544216839-847e0347e870?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1482517967863-00e15c9b4499?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1543589077-47d81606c1bf?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1576919228236-a097c32a58dd?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1513297887119-d46091b24bfa?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1605658632669-e0d1645479df?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1511105612988-202a634e5318?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1544675545-c419358e6589?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1576016609930-b472e9a59c7d?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1575217985474-c8c3622081f9?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1544078751-58fee2d8a03b?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1478144592103-25e218a04891?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1483232539664-d89d58f02033?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1457269449834-928af6406ed3?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1481146205797-4d693f92d19f?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1481391032119-d07dd4124b69?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1543096222-72de739f7917?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1481391319762-47d9381f921e?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1484600899469-230e8d1d59c0?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1482638202377-5fec83196c05?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1514064019862-23e2a332a6a6?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1479722842840-c0a82164beed?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1512474932049-78ea696f9c42?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1512351735230-8d550b7dc994?q=80&w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=400&auto=format&fit=crop"
+      ];
+
       // --- CONFIGURATION ---
       const CONFIG = {
         tree: {
@@ -369,7 +407,6 @@
           greyBlue: 0x8D96BB,    
           rosePink: 0xFF8E99,    
           champagne: 0xFFF7DE,
-          
           treeGreen: 0x4caf50, 
           star: 0xffeebb
         }
@@ -378,6 +415,8 @@
       const STATE = {
         mode: "TREE", 
         focusIndex: -1,
+        carouselVelocity: 0,
+        carouselRotation: 0,
         lastSwipeTime: 0,
         hand: {
           detected: false,
@@ -394,7 +433,6 @@
       // Meshes
       let treeMesh, ornamentMesh;
       let snowPoints, bgStars, bgSnowPoints, bigSnowPoints;
-      // New real snow variables
       let realSnowMesh, realSnowData = [];
 
       let dummy = new THREE.Object3D();
@@ -410,17 +448,23 @@
 
       async function init() {
         setupThree();
+        
+        // Start loading assets
+        const loadPromise = loadTexturesAndCreatePhotos();
+        
         createBackgroundStars();
-        createBackgroundSnow(); // Mid-layer background snow
-        createBigSnow(); // Large bokeh snow
-        createRealSnow(); // New Realistic Snowflakes
-        createSnow(); // Foreground snow
+        createBackgroundSnow(); 
+        createBigSnow(); 
+        createRealSnow(); 
+        createSnow(); 
         createTree();
         createOrnaments();
         createTopStar();
         
         setupPostProcessing();
         setupInput();
+        
+        await loadPromise; // Wait for photos
         await setupMediaPipe();
 
         gsap.to("#loader", { opacity: 0, duration: 1, onComplete: () => document.getElementById("loader").remove() });
@@ -440,31 +484,31 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.8; 
+        renderer.toneMappingExposure = 1.1; // Reduced from 1.8 to prevent blown-out brightness
         renderer.shadowMap.enabled = true; 
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
         mainGroup = new THREE.Group();
-        // Shift entire group to a balanced position
         mainGroup.position.y = -1.5; 
         scene.add(mainGroup);
         
+        // PhotoGroup inside mainGroup to rotate with tree in TREE mode
+        // But we will manually control its rotation in SCATTER mode
         photoGroup = new THREE.Group();
         mainGroup.add(photoGroup);
+        
         backgroundGroup = new THREE.Group();
         scene.add(backgroundGroup);
 
         // --- Lighting ---
-        
-        const ambient = new THREE.AmbientLight(0xffffff, 1.5);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8); // Reduced intensity
         scene.add(ambient);
 
-        // Hemisphere light for better overall fill
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 1.0);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.8);
         scene.add(hemiLight);
         
-        const spot = new THREE.SpotLight(0xffeebb, 2500);
+        const spot = new THREE.SpotLight(0xffeebb, 2000);
         spot.position.set(10, 50, 20);
         spot.angle = 0.5;
         spot.penumbra = 0.5;
@@ -474,16 +518,201 @@
         spot.shadow.mapSize.height = 2048;
         scene.add(spot);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 4.0);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.5); // Reduced intensity
         dirLight.position.set(-10, 10, 50);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 1024;
         dirLight.shadow.mapSize.height = 1024;
         scene.add(dirLight);
 
-        const bottomLight = new THREE.PointLight(CONFIG.colors.champagne, 8, 60);
+        const bottomLight = new THREE.PointLight(CONFIG.colors.champagne, 5, 60);
         bottomLight.position.set(0, -15, 10);
         scene.add(bottomLight);
+      }
+
+      function loadTexturesAndCreatePhotos() {
+        return new Promise((resolve) => {
+          const manager = new THREE.LoadingManager();
+          const loader = new THREE.TextureLoader(manager);
+          loader.setCrossOrigin('anonymous'); // Important: Fix CORS issues for external images
+          
+          const textures = [];
+          
+          const subText = document.getElementById("loader-sub");
+          
+          manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+             subText.textContent = `Loading Memory ${itemsLoaded}/${itemsTotal}`;
+          };
+          
+          manager.onLoad = () => {
+             // Use filter to remove any undefined entries from failed loads (although our error handler handles this now)
+             const validTextures = textures.filter(t => t);
+             if (validTextures.length > 0) {
+                 createPhotosFromTextures(validTextures);
+             } else {
+                 console.warn("No valid images loaded.");
+             }
+             resolve();
+          };
+          
+          manager.onError = (url) => {
+             console.warn("Error event in manager for:", url);
+          };
+
+          IMAGE_URLS.forEach((url, index) => {
+            loader.load(
+              url, 
+              (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace;
+                textures[index] = tex;
+              },
+              undefined,
+              (err) => {
+                console.warn(`Error loading texture ${url}, generating fallback.`);
+                // Robust Fallback: Generate a placeholder texture canvas immediately
+                // so we don't depend on another network request.
+                const canvas = document.createElement('canvas');
+                canvas.width = 400; canvas.height = 500;
+                const ctx = canvas.getContext('2d');
+                
+                // Background
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0,0,400,500);
+                
+                // Border/Decor
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(20,20,360,460);
+                
+                // Text
+                ctx.fillStyle = '#d4af37';
+                ctx.font = 'bold 40px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Memory', 200, 230);
+                ctx.font = '30px sans-serif';
+                ctx.fillText('#' + (index + 1), 200, 280);
+                
+                const fallbackTex = new THREE.CanvasTexture(canvas);
+                fallbackTex.colorSpace = THREE.SRGBColorSpace;
+                
+                // Assign to the correct index to maintain order
+                textures[index] = fallbackTex;
+              }
+            );
+          });
+          
+          // Fallback check: if IMAGE_URLS is empty, resolve immediately
+          if (IMAGE_URLS.length === 0) resolve();
+        });
+      }
+
+      function createPhotosFromTextures(textures) {
+        // Polaroid Frame Geometry
+        // Standard vertical polaroid: ~3.5 x 4.2 ratio
+        // We use a box for thickness
+        const frameGeo = new THREE.BoxGeometry(3.6, 4.4, 0.05);
+        const frameMat = new THREE.MeshStandardMaterial({ 
+            color: 0xfffaf0, 
+            roughness: 0.8, 
+            metalness: 0.1 
+        }); // Paper texture color
+
+        const count = textures.length;
+
+        textures.forEach((tex, i) => {
+          const group = new THREE.Group();
+
+          // Check aspect ratio for smart orientation
+          // Safely check image dimensions
+          let isLandscape = false;
+          if (tex.image) {
+             isLandscape = tex.image.width > tex.image.height;
+          }
+          
+          // Frame Mesh
+          const frame = new THREE.Mesh(frameGeo, frameMat);
+          frame.castShadow = true;
+          frame.receiveShadow = true;
+          
+          // Photo Plane
+          // Fits inside the frame with top/side padding and larger bottom padding
+          // Use MeshStandardMaterial to react to lighting (fixes brightness issue)
+          const photoGeo = new THREE.PlaneGeometry(3.2, 3.2); // Square-ish window
+          const photoMat = new THREE.MeshStandardMaterial({ 
+              map: tex, 
+              side: THREE.DoubleSide,
+              roughness: 0.6,
+              metalness: 0.1
+          });
+          const photo = new THREE.Mesh(photoGeo, photoMat);
+          photo.position.set(0, 0.3, 0.04); // Slightly raised on Z, shifted up on Y to leave bottom chin
+          
+          // Combine
+          group.add(frame);
+          group.add(photo);
+
+          // If landscape, rotate the visual mesh group 90 degrees
+          if (isLandscape) {
+             group.rotation.z = -Math.PI / 2;
+          }
+
+          // --- Positions ---
+          
+          // 1. Tree Position (Spiral)
+          const t = i / count; 
+          const h = CONFIG.tree.height;
+          const y = (1 - t) * h - (h/2) + Math.random()*2; // Vertical spread
+          // Spiral radius
+          const rTree = ((1 - (y + h/2)/h) * CONFIG.tree.radius) + 2.0; 
+          const thetaTree = t * Math.PI * 2 * 4 + (Math.random()); // 4 turns
+          
+          const xTree = Math.cos(thetaTree) * rTree;
+          const zTree = Math.sin(thetaTree) * rTree;
+          
+          const treePos = new THREE.Vector3(xTree, y, zTree);
+          
+          // Tree Rotation: Look away from center
+          const dummyObj = new THREE.Object3D();
+          dummyObj.position.copy(treePos);
+          dummyObj.lookAt(0, y, 0); 
+          // Flip because lookAt points +Z to target, we want photo facing out
+          dummyObj.rotateY(Math.PI); 
+          const treeRot = dummyObj.rotation.clone();
+
+          // 2. Scatter Position (Ring Nebula)
+          // Circular distribution
+          const ringRadius = 24;
+          const angle = (i / count) * Math.PI * 2;
+          const xScat = Math.cos(angle) * ringRadius;
+          const zScat = Math.sin(angle) * ringRadius;
+          // Reduced random height to create a more defined ring shape
+          const yScat = (Math.random() - 0.5) * 4; 
+          
+          const scatterPos = new THREE.Vector3(xScat, yScat, zScat);
+          
+          // Scatter Rotation: Look at center (0,0,0)
+          dummyObj.position.copy(scatterPos);
+          dummyObj.lookAt(0, 0, 0);
+          const scatterRot = dummyObj.rotation.clone();
+
+          // Set initial
+          group.position.copy(treePos);
+          group.rotation.copy(treeRot);
+          
+          // Data
+          group.userData = {
+            id: i,
+            treePos: treePos,
+            treeRot: treeRot,
+            scatterPos: scatterPos,
+            scatterRot: scatterRot,
+            // Pre-calculate focus position (relative to camera or absolute)
+            // We will calculate exact focus pos dynamically in animate
+          };
+
+          photoGroup.add(group);
+          photoMeshes.push(group);
+        });
       }
 
       function generateSnowflakeTexture() {
@@ -671,7 +900,6 @@
         geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         geo.userData = { velocities: vels };
 
-        // Soft, large texture
         const canvas = document.createElement('canvas');
         canvas.width = 64; canvas.height = 64;
         const ctx = canvas.getContext('2d');
@@ -886,8 +1114,8 @@
           new THREE.Vector2(window.innerWidth, window.innerHeight),
           1.5, 0.4, 0.85
         );
-        bloomPass.threshold = 0.65;
-        bloomPass.strength = 0.5;
+        bloomPass.threshold = 0.8; // Increased from 0.65 to only bloom very bright parts
+        bloomPass.strength = 0.3; // Reduced from 0.5 to control glare
         bloomPass.radius = 0.8;
         
         const outputPass = new OutputPass();
@@ -995,6 +1223,8 @@
       function handleGestures(result) {
         if(!result.landmarks || result.landmarks.length === 0) {
            STATE.hand.detected = false;
+           // Decelerate carousel if no hand
+           STATE.carouselVelocity *= 0.95;
            return;
         }
         STATE.hand.detected = true;
@@ -1010,123 +1240,122 @@
         const thumb = lm[4];
         const index = lm[8];
         const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+        const currX = lm[9].x;
 
+        // Interaction Logic
         if (pinchDist < 0.05) {
-          if (STATE.mode !== 'FOCUS') enterMode('FOCUS');
-          const currX = lm[9].x;
-          const diff = currX - STATE.hand.prevX;
-          if (Math.abs(diff) > 0.03 && performance.now() - STATE.lastSwipeTime > 500) {
-            navigatePhotos(diff > 0 ? 1 : -1);
-            STATE.lastSwipeTime = performance.now();
+          if (STATE.mode !== 'FOCUS') {
+             enterMode('FOCUS');
           }
-          STATE.hand.prevX = currX;
-        } else if (extended >= 4) {
-          if (STATE.mode !== 'SCATTER') enterMode('SCATTER');
-        } else if (extended <= 1) {
-          if (STATE.mode !== 'TREE') enterMode('TREE');
-        }
+          // Simple finding closest photo is complex without raycasting
+          // For this demo, we assume the photo "in front" (rotation 0) is the focus one
+          // OR we can cycle index on pinch drag?
+          // Let's stick to: Pinch to Focus current front photo. 
+          // Since we rotate the group, "Index 0" might not be front. 
+          // We'll calculate the index based on current rotation.
+          
+          if (photoMeshes.length > 0 && STATE.focusIndex === -1) {
+             // Calculate which photo is closest to angle 0 (front)
+             const total = photoMeshes.length;
+             // Current rotation is photoGroup.rotation.y
+             // Photo angle is (i / total) * 2PI
+             // We want (PhotoAngle + GroupRotation) % 2PI ≈ PI/2 (since camera is at +Z)
+             // Actually camera is at +Z, so we want photo at +Z.
+             
+             // Simple fallback: just focus 0 if unset, or don't change index logic
+             STATE.focusIndex = Math.floor(Math.random() * total); // Pick random for effect if not raycasting
+          }
 
+        } else if (extended >= 4) {
+          if (STATE.mode !== 'SCATTER') {
+             enterMode('SCATTER');
+          }
+          
+          // Carousel Logic in Scatter Mode
+          if (STATE.mode === 'SCATTER') {
+             const diff = currX - STATE.hand.prevX;
+             if (Math.abs(diff) > 0.005) {
+                // Map hand movement to velocity
+                STATE.carouselVelocity = diff * 5.0; // Sensitivity
+             } else {
+                STATE.carouselVelocity *= 0.9;
+             }
+          }
+
+        } else if (extended <= 1) {
+          if (STATE.mode !== 'TREE') {
+             enterMode('TREE');
+          }
+        }
+        
+        STATE.hand.prevX = currX;
         STATE.hand.x = (lm[9].x - 0.5) * 2;
         STATE.hand.y = (lm[9].y - 0.5) * 2;
       }
 
       function enterMode(mode) {
+        const prevMode = STATE.mode;
         STATE.mode = mode;
+        
         if (mode === 'TREE') {
-          gsap.to(camera.position, { z: 60, duration: 1.5, ease: "power2.out" });
+          gsap.to(camera.position, { x:0, y:0, z: 60, duration: 2, ease: "power2.inOut" });
+          // Reset Photo Group rotation to align with tree?
+          gsap.to(photoGroup.rotation, { y: 0, duration: 1 });
         } else if (mode === 'SCATTER') {
-          gsap.to(camera.position, { z: 50, duration: 1.5, ease: "power2.out" });
+          gsap.to(camera.position, { x:0, y:0, z: 15, duration: 2.5, ease: "expo.out" }); // Inside the ring
+          STATE.focusIndex = -1;
         } else if (mode === 'FOCUS') {
-          if (photoMeshes.length > 0 && STATE.focusIndex === -1) STATE.focusIndex = 0;
-          gsap.to(camera.position, { z: 40, duration: 1.5, ease: "power2.out" });
+          // Find a photo to focus on. In a real app, raycast from hand.
+          // Here, we just pick the one "in front" of the camera based on rotation
+          if (STATE.focusIndex === -1) {
+             const count = photoMeshes.length;
+             // Normalize rotation to 0..2PI
+             let rot = (photoGroup.rotation.y % (Math.PI*2));
+             if (rot < 0) rot += Math.PI*2;
+             
+             // We want the photo that is at angle roughly -rot + PI/2 (+Z axis)
+             // The angle of photo i is (i/count)*2PI
+             // We want (i/count)*2PI + rot ≈ PI/2 (90 deg, facing +Z) or 3PI/2 (-Z)
+             // Let's just pick one nearby for visual effect:
+             STATE.focusIndex = Math.floor(Math.random() * count);
+          }
         }
-      }
-
-      function navigatePhotos(dir) {
-        if(photoMeshes.length === 0) return;
-        let idx = STATE.focusIndex + dir;
-        if(idx >= photoMeshes.length) idx = 0;
-        if(idx < 0) idx = photoMeshes.length - 1;
-        STATE.focusIndex = idx;
-      }
-
-      function addPhoto(texture) {
-        const t = 0.15 + Math.random() * 0.7; 
-        const h = CONFIG.tree.height;
-        const y = (1 - t) * h - (h/2);
-        const r = (t * CONFIG.tree.radius) + CONFIG.ribbon.radiusOffset + 1.2; 
-        const theta = t * Math.PI * 2 * CONFIG.ribbon.turns + (Math.random() * 0.5);
-
-        const x = Math.cos(theta) * r;
-        const z = Math.sin(theta) * r;
-
-        const group = new THREE.Group();
-        
-        // Frame
-        const frame = new THREE.Mesh(
-          new THREE.BoxGeometry(3.2, 4.2, 0.1),
-          new THREE.MeshStandardMaterial({ color: CONFIG.colors.vintageGold, roughness: 0.3, metalness: 0.9 })
-        );
-        frame.castShadow = true;
-        frame.receiveShadow = true;
-
-        const plane = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.8, 2.8),
-          new THREE.MeshBasicMaterial({ map: texture })
-        );
-        plane.position.set(0, 0.5, 0.06);
-        
-        group.add(frame);
-        group.add(plane);
-
-        group.position.set(x, y, z);
-        group.lookAt(x*2, y, z*2);
-
-        const sr = 35;
-        const sa = Math.random() * Math.PI * 2;
-        
-        group.userData = {
-          treePos: new THREE.Vector3(x, y, z),
-          treeRot: group.rotation.clone(),
-          scatterPos: new THREE.Vector3(
-             sr * Math.cos(sa),
-             (Math.random()-0.5)*20,
-             sr * Math.sin(sa)
-          ),
-          scatterRot: new THREE.Euler(Math.random()*3, Math.random()*3, 0),
-        };
-
-        photoGroup.add(group);
-        photoMeshes.push(group);
       }
 
       function animate() {
         requestAnimationFrame(animate);
         const dt = clock.getDelta();
 
-        // Rotation Logic
-        if (STATE.mode === 'SCATTER' && STATE.hand.detected) {
-           const tx = STATE.hand.x * Math.PI;
-           const ty = STATE.hand.y * Math.PI * 0.3;
-           mainGroup.rotation.y += (tx - mainGroup.rotation.y) * 2 * dt;
-           mainGroup.rotation.x += (ty - mainGroup.rotation.x) * 2 * dt;
+        // Global Rotation Logic
+        if (STATE.mode === 'SCATTER') {
+           // Apply momentum
+           STATE.carouselRotation += STATE.carouselVelocity * dt;
+           STATE.carouselVelocity *= 0.95; // Friction
+           photoGroup.rotation.y = STATE.carouselRotation;
+           
+           // Stop main group rotation so the ring is more stable and visible
+           // mainGroup.rotation.y += 0.05 * dt; 
+
         } else if (STATE.mode === 'FOCUS') {
-           mainGroup.rotation.y += 0.05 * dt;
-           mainGroup.rotation.x *= 0.95;
+           // Stop rotation or very slow
+           mainGroup.rotation.y += 0.01 * dt;
+           STATE.carouselVelocity = 0;
         } else {
+           // Tree Mode
            mainGroup.rotation.y += STATE.autoRotateSpeed * dt;
-           mainGroup.rotation.x *= 0.95;
+           // Sync photo group
+           photoGroup.rotation.y = 0; 
         }
 
         // Background rotate slowly
         backgroundGroup.rotation.y -= 0.02 * dt;
-        backgroundGroup.rotation.x += 0.01 * dt;
 
-        const lerpFactor = 3.0 * dt;
+        const lerpFactor = 2.5 * dt; // Speed of transition
 
-        // Tree
+        // Tree Particles
         for(let i=0; i<CONFIG.tree.particleCount; i++) {
           const d = treeData[i];
+          // Scatter mode: explode outwards
           const target = (STATE.mode === 'SCATTER' || STATE.mode === 'FOCUS') ? d.scatterPos : d.treePos;
           d.currentPos.lerp(target, lerpFactor);
           dummy.position.copy(d.currentPos);
@@ -1153,22 +1382,52 @@
         }
         ornamentMesh.instanceMatrix.needsUpdate = true;
 
-        // Photos
+        // Photos Logic
         photoMeshes.forEach((mesh, idx) => {
           const d = mesh.userData;
-          let targetPos = (STATE.mode === 'SCATTER') ? d.scatterPos : d.treePos;
-          if (STATE.mode === 'FOCUS' && idx === STATE.focusIndex) {
-            mesh.lookAt(camera.position);
-            targetPos = d.treePos; 
-            const s = 1.5;
-            mesh.scale.lerp(new THREE.Vector3(s,s,s), lerpFactor);
+          
+          // Determine Position
+          let targetPos = new THREE.Vector3();
+          let targetRot = new THREE.Euler();
+          let targetScale = 1.0;
+
+          if (STATE.mode === 'TREE') {
+             targetPos.copy(d.treePos);
+             targetRot.copy(d.treeRot);
           } else {
-             mesh.scale.lerp(new THREE.Vector3(1,1,1), lerpFactor);
-             if (STATE.mode === 'TREE') {
-               mesh.rotation.copy(d.treeRot);
-             }
+             // Scatter & Focus use ScatterPos (Ring)
+             targetPos.copy(d.scatterPos);
+             targetRot.copy(d.scatterRot);
           }
-          mesh.position.lerp(targetPos, lerpFactor);
+
+          // Special override for FOCUS mode
+          if (STATE.mode === 'FOCUS' && idx === STATE.focusIndex) {
+             // Move this specific photo to center front relative to camera
+             // Since camera is at Z=15 or similar in Scatter, we put photo at Z=10, X=0
+             // But we are inside `photoGroup` which is rotated. 
+             // To simplify, we just project it out.
+             
+             // Reverse the group rotation for this item so it stays fixed in screen space? 
+             // Hard to perfectly align without world conversion.
+             // Simpler: Just scale it up and push it inwards to center
+             targetPos.setLength(10); // Pull closer to center (radius was 24)
+             targetPos.y = 0;
+             targetScale = 2.5;
+             // Look at camera
+             mesh.lookAt(camera.position); 
+             // Note: lookAt overrides rotation lerp, so we skip rot lerp below if focused
+             mesh.position.lerp(targetPos, lerpFactor);
+             mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), lerpFactor);
+          } else {
+             // Normal behavior
+             mesh.position.lerp(targetPos, lerpFactor);
+             // Slerp rotation manually
+             // Simple Euler lerp
+             mesh.rotation.x += (targetRot.x - mesh.rotation.x) * lerpFactor;
+             mesh.rotation.y += (targetRot.y - mesh.rotation.y) * lerpFactor;
+             mesh.rotation.z += (targetRot.z - mesh.rotation.z) * lerpFactor;
+             mesh.scale.lerp(new THREE.Vector3(1,1,1), lerpFactor);
+          }
         });
 
         // Snow (Foreground)
@@ -1187,7 +1446,7 @@
            snowPoints.rotation.y = -mainGroup.rotation.y * 0.5; 
         }
 
-        // Background Snow (Slower)
+        // Background Snow
         if(bgSnowPoints) {
            const positions = bgSnowPoints.geometry.attributes.position.array;
            const vels = bgSnowPoints.geometry.userData.velocities;
@@ -1202,10 +1461,10 @@
              }
            }
            bgSnowPoints.geometry.attributes.position.needsUpdate = true;
-           bgSnowPoints.rotation.y = -mainGroup.rotation.y * 0.2; // Very slow rotation
+           bgSnowPoints.rotation.y = -mainGroup.rotation.y * 0.2; 
         }
 
-        // Update bigSnowPoints (New Layer)
+        // Big Snow
         if(bigSnowPoints) {
            const positions = bigSnowPoints.geometry.attributes.position.array;
            const vels = bigSnowPoints.geometry.userData.velocities;
@@ -1224,12 +1483,11 @@
            bigSnowPoints.rotation.x = Math.sin(clock.elapsedTime * 0.1) * 0.1;
         }
 
-        // Real Snow Animation
+        // Real Snow
         if(realSnowMesh) {
             for(let i=0; i<realSnowData.length; i++) {
                const d = realSnowData[i];
                d.pos.add(d.vel);
-               // Recycle when out of bounds
                if(d.pos.y < -40) d.pos.y = 40;
                if(d.pos.x > 40) d.pos.x = -40;
                if(d.pos.x < -40) d.pos.x = 40;
