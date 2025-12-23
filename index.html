@@ -390,7 +390,7 @@
         tree: {
           height: 32,
           radius: 11,
-          particleCount: 3000, 
+          particleCount: 7000, // Increased particle count for a denser tree
         },
         ribbon: {
           turns: 5.5,
@@ -484,7 +484,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1; // Reduced from 1.8 to prevent blown-out brightness
+        renderer.toneMappingExposure = 1.0; // Increased to 1.0 for better overall brightness
         renderer.shadowMap.enabled = true; 
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
@@ -502,10 +502,10 @@
         scene.add(backgroundGroup);
 
         // --- Lighting ---
-        const ambient = new THREE.AmbientLight(0xffffff, 0.8); // Reduced intensity
+        const ambient = new THREE.AmbientLight(0xffffff, 2.0); // Significantly increased ambient light
         scene.add(ambient);
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.8);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 1.5); // Boosted hemisphere light
         scene.add(hemiLight);
         
         const spot = new THREE.SpotLight(0xffeebb, 2000);
@@ -518,7 +518,7 @@
         spot.shadow.mapSize.height = 2048;
         scene.add(spot);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2.5); // Reduced intensity
+        const dirLight = new THREE.DirectionalLight(0xffffff, 3.0); // Stronger directional light
         dirLight.position.set(-10, 10, 50);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 1024;
@@ -612,10 +612,10 @@
         // We use a box for thickness
         const frameGeo = new THREE.BoxGeometry(3.6, 4.4, 0.05);
         const frameMat = new THREE.MeshStandardMaterial({ 
-            color: 0xfffaf0, 
-            roughness: 0.8, 
+            color: 0xfffaf0, // Brighter frame color
+            roughness: 0.4, 
             metalness: 0.1 
-        }); // Paper texture color
+        }); 
 
         const count = textures.length;
 
@@ -636,13 +636,17 @@
           
           // Photo Plane
           // Fits inside the frame with top/side padding and larger bottom padding
-          // Use MeshStandardMaterial to react to lighting (fixes brightness issue)
+          // Use MeshStandardMaterial with emissive properties to simulate backlit photo
           const photoGeo = new THREE.PlaneGeometry(3.2, 3.2); // Square-ish window
           const photoMat = new THREE.MeshStandardMaterial({ 
               map: tex, 
               side: THREE.DoubleSide,
-              roughness: 0.6,
-              metalness: 0.1
+              roughness: 0.4,
+              metalness: 0.0,
+              color: 0xffffff, // Pure white base for max texture brightness
+              emissive: 0xffffff, // Self-illuminated
+              emissiveMap: tex,   // Glows with its own content
+              emissiveIntensity: 0.25 // Subtle glow to be visible in dark
           });
           const photo = new THREE.Mesh(photoGeo, photoMat);
           photo.position.set(0, 0.3, 0.04); // Slightly raised on Z, shifted up on Y to leave bottom chin
@@ -661,9 +665,19 @@
           // 1. Tree Position (Spiral)
           const t = i / count; 
           const h = CONFIG.tree.height;
-          const y = (1 - t) * h - (h/2) + Math.random()*2; // Vertical spread
+          
+          // Modified height distribution: Use power function to bunch more items at the bottom (t=1)
+          // y goes from Top (h/2) to Bottom (-h/2)
+          // t goes 0 -> 1
+          // We want items to accumulate as t -> 1.
+          const effectiveT = Math.pow(t, 0.7); // Non-linear distribution
+          const y = (1 - effectiveT) * h - (h/2) + Math.random()*2;
+          
           // Spiral radius
-          const rTree = ((1 - (y + h/2)/h) * CONFIG.tree.radius) + 2.0; 
+          // Adjust radius calc to match new y distribution
+          // r is roughly linear with y, largest at bottom
+          const radiusYScale = (1 - (y + h/2)/h);
+          const rTree = (radiusYScale * CONFIG.tree.radius) + 2.0; 
           const thetaTree = t * Math.PI * 2 * 4 + (Math.random()); // 4 turns
           
           const xTree = Math.cos(thetaTree) * rTree;
@@ -681,19 +695,21 @@
 
           // 2. Scatter Position (Ring Nebula)
           // Circular distribution
-          const ringRadius = 24;
+          const ringRadius = 35; // Increased radius from 18 to 35 to separate images significantly
           const angle = (i / count) * Math.PI * 2;
           const xScat = Math.cos(angle) * ringRadius;
           const zScat = Math.sin(angle) * ringRadius;
-          // Reduced random height to create a more defined ring shape
-          const yScat = (Math.random() - 0.5) * 4; 
+          // Tighter vertical randomness to match the clean ring reference
+          const yScat = (Math.random() - 0.5) * 3; 
           
           const scatterPos = new THREE.Vector3(xScat, yScat, zScat);
           
-          // Scatter Rotation: Look at center (0,0,0)
+          // Scatter Rotation: Look OUTWARDS from center (Carousel style)
           dummyObj.position.copy(scatterPos);
-          dummyObj.lookAt(0, 0, 0);
-          const scatterRot = dummyObj.rotation.clone();
+          dummyObj.lookAt(0, 0, 0); // Looks at center (inwards)
+          dummyObj.rotateY(Math.PI); // Rotate 180 to face outwards
+          // Remove any tilt (X/Z rotation) so they stand perfectly straight up
+          const scatterRot = new THREE.Euler(0, dummyObj.rotation.y, 0);
 
           // Set initial
           group.position.copy(treePos);
@@ -971,12 +987,13 @@
 
       function createTree() {
         const geo = new THREE.TetrahedronGeometry(0.15, 0);
+        // Updated material for brighter, greener tree
         const mat = new THREE.MeshStandardMaterial({ 
-          color: CONFIG.colors.treeGreen, 
+          color: 0x66bb6a, // Brighter green base
           roughness: 0.4, 
           metalness: 0.1,
-          emissive: 0x003300, 
-          emissiveIntensity: 0.3
+          emissive: 0x004400, // Stronger green emissive
+          emissiveIntensity: 0.8 // Increased intensity
         });
         
         treeMesh = new THREE.InstancedMesh(geo, mat, CONFIG.tree.particleCount);
@@ -985,7 +1002,7 @@
         treeMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         mainGroup.add(treeMesh);
 
-        const baseColor = new THREE.Color(CONFIG.colors.treeGreen);
+        const baseColor = new THREE.Color(0x66bb6a); // Match base color
 
         for(let i=0; i<CONFIG.tree.particleCount; i++) {
           const yNorm = Math.pow(Math.random(), 0.9); 
@@ -1270,22 +1287,22 @@
           if (STATE.mode !== 'SCATTER') {
              enterMode('SCATTER');
           }
-          
-          // Carousel Logic in Scatter Mode
-          if (STATE.mode === 'SCATTER') {
-             const diff = currX - STATE.hand.prevX;
-             if (Math.abs(diff) > 0.005) {
-                // Map hand movement to velocity
-                STATE.carouselVelocity = diff * 5.0; // Sensitivity
-             } else {
-                STATE.carouselVelocity *= 0.9;
-             }
-          }
-
         } else if (extended <= 1) {
           if (STATE.mode !== 'TREE') {
              enterMode('TREE');
           }
+        }
+
+        // Independent Navigation Logic for Scatter Mode
+        // Allows rotation even if hand isn't perfectly "open palm" (extended >= 4)
+        // as long as we are in Scatter mode and not trying to focus (pinch).
+        if (STATE.mode === 'SCATTER' && pinchDist >= 0.05) {
+             const diff = currX - STATE.hand.prevX;
+             if (Math.abs(diff) > 0.002) { // Lower threshold for better sensitivity
+                STATE.carouselVelocity = diff * 15.0; // Increased sensitivity significantly
+             } else {
+                STATE.carouselVelocity *= 0.9;
+             }
         }
         
         STATE.hand.prevX = currX;
@@ -1302,7 +1319,8 @@
           // Reset Photo Group rotation to align with tree?
           gsap.to(photoGroup.rotation, { y: 0, duration: 1 });
         } else if (mode === 'SCATTER') {
-          gsap.to(camera.position, { x:0, y:0, z: 15, duration: 2.5, ease: "expo.out" }); // Inside the ring
+          // Camera moves further back to accommodate larger ring (radius 35)
+          gsap.to(camera.position, { x:0, y:0, z: 65, duration: 2.5, ease: "expo.out" }); 
           STATE.focusIndex = -1;
         } else if (mode === 'FOCUS') {
           // Find a photo to focus on. In a real app, raycast from hand.
@@ -1394,10 +1412,12 @@
           if (STATE.mode === 'TREE') {
              targetPos.copy(d.treePos);
              targetRot.copy(d.treeRot);
+             targetScale = 0.6; // Smaller scale for tree mode
           } else {
              // Scatter & Focus use ScatterPos (Ring)
              targetPos.copy(d.scatterPos);
              targetRot.copy(d.scatterRot);
+             targetScale = 1.8; // Larger scale for scatter mode to look like reference
           }
 
           // Special override for FOCUS mode
@@ -1412,7 +1432,7 @@
              // Simpler: Just scale it up and push it inwards to center
              targetPos.setLength(10); // Pull closer to center (radius was 24)
              targetPos.y = 0;
-             targetScale = 2.5;
+             targetScale = 2.5; // Even larger when focused
              // Look at camera
              mesh.lookAt(camera.position); 
              // Note: lookAt overrides rotation lerp, so we skip rot lerp below if focused
@@ -1426,7 +1446,7 @@
              mesh.rotation.x += (targetRot.x - mesh.rotation.x) * lerpFactor;
              mesh.rotation.y += (targetRot.y - mesh.rotation.y) * lerpFactor;
              mesh.rotation.z += (targetRot.z - mesh.rotation.z) * lerpFactor;
-             mesh.scale.lerp(new THREE.Vector3(1,1,1), lerpFactor);
+             mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), lerpFactor);
           }
         });
 
@@ -1510,4 +1530,4 @@
       init();
     </script>
   </body>
-</html>
+</html>--- END OF FILE index.html ---
