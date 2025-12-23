@@ -214,6 +214,43 @@
         color: #fff;
         box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
       }
+      
+      /* Music Toggle Button */
+      .music-btn {
+        position: absolute;
+        bottom: 40px;
+        left: 94px; /* Spaced to the right of help-btn */
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        color: #d4af37;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s;
+        pointer-events: auto;
+        z-index: 20;
+        font-family: "Noto Color Emoji", sans-serif;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+      .music-btn:hover {
+        background: rgba(212, 175, 55, 0.2);
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+      }
+      .music-btn.playing {
+        background: rgba(212, 175, 55, 0.2);
+        animation: pulse-gold 2s infinite;
+      }
+      @keyframes pulse-gold {
+        0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+      }
 
       .instruction-panel {
         position: absolute;
@@ -334,6 +371,7 @@
       </div>
       
       <div class="help-btn" id="help-btn">?</div>
+      <div class="music-btn" id="music-btn">🎵</div>
     </div>
 
     <div id="webcam-wrapper">
@@ -1238,7 +1276,96 @@
         composer.addPass(outputPass);
       }
 
+      const SimpleSynth = {
+        ctx: null,
+        isPlaying: false,
+        timer: null,
+        noteIndex: 0,
+        tempo: 150, 
+        melody: [
+            {f:196,d:1}, {f:261,d:1}, {f:261,d:0.5}, {f:293,d:0.5}, {f:261,d:0.5}, {f:246,d:0.5}, 
+            {f:220,d:1}, {f:220,d:1}, 
+            {f:293,d:1}, {f:293,d:0.5}, {f:329,d:0.5}, {f:293,d:0.5}, {f:261,d:0.5}, {f:246,d:1}, {f:196,d:1}, 
+            {f:329,d:1}, {f:329,d:0.5}, {f:349,d:0.5}, {f:329,d:0.5}, {f:293,d:0.5}, {f:261,d:1}, {f:220,d:1}, 
+            {f:196,d:0.5}, {f:196,d:0.5}, 
+            {f:220,d:1}, {f:293,d:1}, {f:246,d:1}, {f:261,d:2} 
+        ],
+        init() {
+            if(!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        },
+        play() {
+            this.init();
+            if(this.ctx.state === 'suspended') this.ctx.resume();
+            if(this.isPlaying) return;
+            this.isPlaying = true;
+            this.scheduleNext();
+        },
+        pause() {
+            this.isPlaying = false;
+            if(this.timer) clearTimeout(this.timer);
+        },
+        scheduleNext() {
+            if(!this.isPlaying) return;
+            const note = this.melody[this.noteIndex];
+            const beatDur = 60 / this.tempo;
+            const dur = note.d * beatDur;
+            this.playTone(note.f, dur);
+            this.timer = setTimeout(() => {
+                this.noteIndex = (this.noteIndex + 1) % this.melody.length;
+                this.scheduleNext();
+            }, dur * 1000);
+        },
+        playTone(freq, dur) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            const now = this.ctx.currentTime;
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+            osc.start(now);
+            osc.stop(now + dur + 0.1);
+        }
+      };
+
       function setupInput() {
+        // Music Logic (Synth)
+        const musicBtn = document.getElementById("music-btn");
+        let isMusicPlaying = false;
+        
+        musicBtn.addEventListener("click", () => {
+          if (isMusicPlaying) {
+            SimpleSynth.pause();
+            musicBtn.classList.remove("playing");
+            musicBtn.style.opacity = "0.6";
+            isMusicPlaying = false;
+          } else {
+            SimpleSynth.play();
+            musicBtn.classList.add("playing");
+            musicBtn.style.opacity = "1";
+            isMusicPlaying = true;
+          }
+        });
+        
+        // Auto-play on interaction
+        const startAudio = () => {
+          if (!isMusicPlaying) {
+             SimpleSynth.play();
+             isMusicPlaying = true;
+             musicBtn.classList.add("playing");
+             musicBtn.style.opacity = "1";
+             window.removeEventListener("click", startAudio);
+             window.removeEventListener("keydown", startAudio);
+          }
+        };
+        window.addEventListener("click", startAudio);
+        window.addEventListener("keydown", startAudio);
+
         // Mouse Move Listener for Parallax
         window.addEventListener('mousemove', (e) => {
            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1476,8 +1603,7 @@
              });
 
              if (closestIdx !== -1) {
-                STATE.focusIndex = closestIdx;
-                enterMode('FOCUS');
+                enterMode('FOCUS', closestIdx);
              }
           }
         } else if (extended >= 4) {
